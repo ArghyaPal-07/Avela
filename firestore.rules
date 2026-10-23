@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  match /users/{uid}/wellness/{document} {
+   allow read, delete: if request.auth != null && request.auth.uid == uid;
+   allow create, update: if request.auth != null && request.auth.uid == uid
+      && document == 'data' && request.resource.data.keys().hasOnly(['version', 'profile', 'entries'])
+      && request.resource.data.version == 1
+      && request.resource.data.profile is map
+      && request.resource.data.profile.name is string
+      && request.resource.data.profile.name.size() <= 50
+      && request.resource.data.profile.lastPeriod is string
+      && request.resource.data.profile.cycleLength is int
+      && request.resource.data.profile.cycleLength >= 21 && request.resource.data.profile.cycleLength <= 40
+      && request.resource.data.profile.periodLength is int
+      && request.resource.data.profile.periodLength >= 1 && request.resource.data.profile.periodLength <= 10
+      && request.resource.data.entries is list && request.resource.data.entries.size() <= 2000;
+  }
+ }
+}
