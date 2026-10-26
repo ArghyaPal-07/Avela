@@ -7,6 +7,7 @@ import "@fontsource/fraunces/400.css";
 import "@fontsource/fraunces/400-italic.css";
 import "./globals.css";
 import { WellnessApp } from "@/components/wellness-app";
+import { Analytics } from "@vercel/analytics/next";
 export const metadata: Metadata = {
   title: { default: "Avela — In tune with you", template: "%s | Avela" },
   description:
@@ -20,6 +21,7 @@ export default function Layout({
     <html lang="en">
       <body>
         <WellnessApp>{children}</WellnessApp>
+        <Analytics />
       </body>
     </html>
   );
