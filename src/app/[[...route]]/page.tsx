@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { LandingPage } from "@/src/components/landing-page";
 const titles: Record<string, string> = {
+  "": "Get to know your cycle",
+  dashboard: "Overview",
   calendar: "Cycle calendar",
   journal: "Daily journal",
   insights: "My insights",
@@ -20,6 +23,7 @@ export async function generateMetadata({
   const { route } = await params;
   return { title: titles[(route || []).join("/")] || "In tune with you" };
 }
-export default function Page() {
-  return null;
+export default async function Page({ params }: { params: Promise<{ route?: string[] }> }) {
+  const { route } = await params;
+  return !route?.length ? <LandingPage /> : null;
 }

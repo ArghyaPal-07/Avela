@@ -7,3 +7,4 @@ out/
 .pub/artifacts/
 .agents
 .skills-lock.json
+.taste-skill/

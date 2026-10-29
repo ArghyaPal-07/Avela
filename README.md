@@ -85,7 +85,8 @@ Restart the development server after changing `.env.local`. For production, set 
 
 | Route | Page |
 | --- | --- |
-| `/` and `/dashboard` | Overview |
+| `/` | Public landing page |
+| `/dashboard` | Tracker overview |
 | `/calendar` | Cycle calendar |
 | `/journal` | Daily journal |
 | `/insights` | Personal summaries |
@@ -95,6 +96,13 @@ Restart the development server after changing `.env.local`. For production, set 
 | `/welcome`, `/features`, `/about`, `/privacy`, `/contact` | Getting started, app information, privacy, and feedback |
 
 ## Project structure
+
+The landing page reuses the app's brand, fonts, and CSS tokens. Its primary action opens `/dashboard`.
+The original hero video is preserved at `pub/video/hero-desktop.mp4`. The web copy at
+`public/pub/video/hero-desktop.mp4` is H.264, audio-free, and fast-start enabled. WebP posters
+are served from the same folder. The browser receives no video source below 900px, with
+reduced motion, or with data saving enabled. Video playback has a keyboard-accessible
+pause/resume button and falls back to the poster when playback fails.
 
 - [`app/layout.tsx`](./app/layout.tsx) — shared layout, metadata, and bundled fonts.
 - [`app/[[...route]]/page.tsx`](./app/[[...route]]/page.tsx) — App Router entry point.

@@ -75,7 +75,7 @@ import {
 } from "./tracking-views";
 const KEY = "avela.wellness.v1";
 const nav = [
-  { href: "/", label: "Overview", icon: LayoutGrid },
+  { href: "/dashboard", label: "Overview", icon: LayoutGrid },
   { href: "/calendar", label: "Cycle calendar", icon: CalendarDays },
   { href: "/insights", label: "My insights", icon: TrendingUp },
   { href: "/journal", label: "Daily journal", icon: BookOpen },
@@ -89,7 +89,7 @@ type DialogName =
   | null;
 export function WellnessApp({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const activePath = path === "/dashboard" ? "/" : path;
+  const activePath = path;
   const [data, setData] = useState<Data | null>(null),
     [mode, setMode] = useState<"local" | "cloud">("local");
   const [user, setUser] = useState<User | null>(null),
@@ -1006,7 +1006,7 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
               title="This page has wandered off"
               description="Let’s get you back to your wellness space."
               action={
-                <Link className="button primary" href="/">
+                <Link className="button primary" href="/dashboard">
                   Back to overview
                 </Link>
               }

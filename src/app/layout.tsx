@@ -6,7 +6,7 @@ import "@fontsource/dm-sans/700.css";
 import "@fontsource/fraunces/400.css";
 import "@fontsource/fraunces/400-italic.css";
 import "./globals.css";
-import { WellnessApp } from "@/src/components/wellness-app";
+import { AppShell } from "@/src/components/app-shell";
 import { Analytics } from "@vercel/analytics/next";
 export const metadata: Metadata = {
   title: { default: "Avela — In tune with you", template: "%s | Avela" },
@@ -20,7 +20,7 @@ export default function Layout({
   return (
     <html lang="en">
       <body>
-        <WellnessApp>{children}</WellnessApp>
+        <AppShell>{children}</AppShell>
         <Analytics mode={process.env.VERCEL ? "production" : "development"} />
       </body>
     </html>

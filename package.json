@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/*.test.ts"
+    "test": "node --import tsx --test src/tests/*.test.ts"
   },
   "dependencies": {
     "@fontsource/dm-sans": "^5.2.0",
