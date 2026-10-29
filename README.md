@@ -55,6 +55,23 @@ When Firebase is configured and you sign in, the account uses Firebase Authentic
 
 Firebase web configuration is exposed to the browser by design. Access control must come from Firebase Authentication and Firestore Security Rules; **never put Firebase Admin credentials or other server secrets in `NEXT_PUBLIC_*` variables.**
 
+## Contact form setup
+
+The `/contact` form uses the [EmailJS Send API](https://www.emailjs.com/docs/rest-api/send/).
+Put `NEXT_PUBLIC_EMAILJS_SERVICE_ID`, `NEXT_PUBLIC_EMAILJS_TEMPLATE_ID`, and
+`NEXT_PUBLIC_EMAILJS_PUBLIC_KEY` in a root `.env` file (see `.env.example`). These
+are public browser configuration; no private EmailJS key is needed. Configure
+the template recipient in EmailJS, set Reply-To to `{{email}}`, and use
+`{{email}}` and `{{message}}` in the template body. Only the entered email and
+message are submitted; tracker records are not attached.
+
+Restart development after changing configuration and rebuild production, since
+Next.js bundles `NEXT_PUBLIC_*` values at build time. Add these variables to
+your hosting environment before building there. Without configuration, sending
+is disabled. The form retains the message on failure, prevents concurrent
+submissions, and applies a 10-second browser-side cooldown. This cooldown does
+not replace EmailJS service-side abuse protection.
+
 ## Optional Firebase setup
 
 The app works without Firebase. To enable cloud accounts:

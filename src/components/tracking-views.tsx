@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -30,7 +30,7 @@ import {
   symptoms,
   today,
 } from "@/src/lib/model";
-import { download } from "@/src/lib/download";
+import { contactConfigured, sendContactEmail } from "@/src/lib/contact";
 import { ProfileForm } from "./forms";
 import { Arrow, Botanical, Empty, SectionTitle } from "./primitives";
 export function MoodFace({ index }: { index: number }) {
@@ -626,7 +626,7 @@ export function InfoPage({ path, start }: { path: string; start: () => void }) {
         {path === "/privacy"
           ? "Clear choices about where your most personal moments live."
           : path === "/contact"
-            ? "Have feedback? Keep a note for the person running this installation."
+            ? "Have a question or a little feedback? Send us a note."
             : "Your cycle is more than dates on a calendar. It’s how you feel, what you notice, and the small moments that make you, you."}
       </p>
       {path === "/contact" ? (
@@ -650,6 +650,11 @@ export function InfoPage({ path, start }: { path: string; start: () => void }) {
                     icon: ArrowDownToLine,
                     title: "Always yours",
                     text: "Export JSON or CSV in Settings. You can clear your journal there, too. Clearing a cloud journal does not delete your authentication account.",
+                  },
+                  {
+                    icon: BookOpen,
+                    title: "When you get in touch",
+                    text: "Submitting the contact form sends the email address and message you enter through EmailJS to the site operator. Your tracker entries are not attached to the message.",
                   },
                 ]
               : [
@@ -702,38 +707,58 @@ export function Contact() {
   const [email, setEmail] = useState(""),
     [message, setMessage] = useState(""),
     [saved, setSaved] = useState(false),
+    [sending, setSending] = useState(false),
     [error, setError] = useState("");
+  const pending = useRef(false);
+  const lastAttempt = useRef(0);
   return (
     <section className="card contact-card">
-      <h2>A note worth keeping.</h2>
-      <p className="muted">
-        There is no support delivery service connected. Download your feedback
-        as a text file to share with the site operator yourself.
+      <h2>Get in touch.</h2>
+      <p className="muted" id="contact-delivery">
+        Your email and message will be sent through EmailJS to the Avela site operator.
       </p>
       <form
         className="profile-form"
-        onSubmit={(e) => {
+        aria-describedby="contact-delivery"
+        aria-busy={sending}
+        onSubmit={async (e) => {
           e.preventDefault();
-          if (message.trim().length < 10) {
-            setError("Please add at least 10 characters to your message.");
+          if (pending.current) return;
+          setSaved(false);
+          if (message.trim().length < 10 || message.trim().length > 5000) {
+            setError("Please enter a message between 10 and 5,000 characters.");
             return;
           }
-          download(
-            "avela-feedback.txt",
-            `Reply email: ${email}\n\n${message}`,
-            "text/plain",
-          );
-          setSaved(true);
+          if (Date.now() - lastAttempt.current < 10000) {
+            setError("Please wait a few seconds before sending another message.");
+            return;
+          }
+          pending.current = true;
+          lastAttempt.current = Date.now();
+          setSending(true);
           setError("");
+          try {
+            await sendContactEmail(email, message);
+            setSaved(true);
+            setMessage("");
+          } catch (error) {
+            setError(error instanceof Error ? error.message : "Your message could not be sent. Please try again later.");
+          } finally {
+            pending.current = false;
+            setSending(false);
+          }
         }}
       >
         <label>
           Your email
           <input
             type="email"
+            name="email"
             required
+            disabled={sending}
+            maxLength={254}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => { setEmail(e.target.value); setSaved(false); setError(""); }}
             autoComplete="email"
           />
         </label>
@@ -741,6 +766,8 @@ export function Contact() {
           Your message
           <textarea
             required
+            name="message"
+            disabled={sending}
             minLength={10}
             maxLength={5000}
             rows={5}
@@ -748,16 +775,19 @@ export function Contact() {
             onChange={(e) => {
               setMessage(e.target.value);
               setSaved(false);
+              setError("");
             }}
           />
         </label>
-        <button type="submit" className="button primary">
-          <ArrowDownToLine size={16} />
-          Download feedback
+        <button type="submit" className="button primary" disabled={sending || !contactConfigured}>
+          {sending ? "Sending…" : "Send message"}
+          <ArrowRight size={16} aria-hidden="true" />
         </button>
+        {!contactConfigured && <p role="status" className="muted">Email delivery is not configured. Please try again later.</p>}
+        {sending && <p role="status" className="muted">Sending your message…</p>}
         {saved && (
           <p role="status" className="muted">
-            Feedback file prepared. Nothing was sent to a server.
+            Your message was submitted. Thank you for getting in touch.
           </p>
         )}
         {error && (

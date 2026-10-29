@@ -98,7 +98,7 @@ export function LandingPage() {
 
       <footer className="landing-footer landing-frame">
         <div><Link href="/" aria-label="Avela home"><Brand /></Link><p>In tune with you.</p></div>
-        <nav aria-label="Footer navigation"><a href="#features">Features</a><a href="#faq">FAQ</a><Link href="/about">About Avela</Link><Link href="/privacy">Privacy &amp; data</Link></nav>
+        <nav aria-label="Footer navigation"><a href="#features">Features</a><a href="#faq">FAQ</a><Link href="/about">About Avela</Link><Link href="/contact">Get in touch</Link><Link href="/privacy">Privacy &amp; data</Link></nav>
         <p className="landing-footer-note">A cycle tracker for everyday life.<br />Cycle estimates are not medical advice.</p>
       </footer>
     </div>
