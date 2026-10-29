@@ -121,7 +121,7 @@ export function CycleRing({
           );
         })}
         <text x="120" y="88" className="ring-label" textAnchor="middle">
-          CYCLE DAY
+          Cycle day
         </text>
         <text x="120" y="146" className="ring-day" textAnchor="middle">
           {day || "—"}
@@ -153,7 +153,7 @@ export function Stat({
   return (
     <Link href={link} className="card stat-card">
       <div>
-        <span className="eyebrow">{label}</span>
+        <span className="stat-label">{label.charAt(0) + label.slice(1).toLowerCase()}</span>
         <span className={`icon-tile ${color}`}>{icon}</span>
       </div>
       <h3>{value}</h3>
@@ -288,85 +288,23 @@ export function Calendar({
 
 export function MoodChart({ entries }: { entries: Entry[] }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(today(), i - 6));
-  const score: Record<string, number> = {
-    Happy: 4,
-    Calm: 3,
-    Sensitive: 2,
-    Low: 1,
-    Anxious: 1,
-    Energetic: 5,
-  };
-  const points = days.map((d, i) => {
-    const e = entries.find((e) => e.date === d && e.mood);
-    return e
-      ? { x: 35 + i * 39, y: 130 - score[e.mood] * 20, mood: e.mood, date: d }
-      : null;
-  });
+  const hasMoods = days.some((d) => entries.some((e) => e.date === d && e.mood));
   return (
     <div className="mood-chart">
-      <svg
-        viewBox="0 0 300 172"
-        role="img"
-        aria-label={
-          points.some(Boolean)
-            ? points
-                .filter(Boolean)
-                .map((p) => `${p!.date}: ${p!.mood}`)
-                .join(", ")
-            : "No mood check-ins in the last 7 days"
-        }
-      >
-        {[30, 70, 110].map((y) => (
-          <line
-            key={y}
-            x1="25"
-            x2="280"
-            y1={y}
-            y2={y}
-            stroke="#ecece5"
-            strokeDasharray="3 4"
-          />
-        ))}
-        {points
-          .slice(1)
-          .map((p, i) =>
-            p && points[i] ? (
-              <path
-                key={i}
-                d={`M${points[i]!.x},${points[i]!.y} L${p.x},${p.y}`}
-                fill="none"
-                stroke="#6d8c70"
-                strokeWidth="2"
-              />
-            ) : null,
-          )}
-        {points.map(
-          (p, i) =>
-            p && (
-              <g key={i}>
-                <circle cx={p.x} cy={p.y} r="7" fill="#eef3ea" />
-                <circle cx={p.x} cy={p.y} r="3.5" fill="#65836a" />
-                <title>
-                  {p.date}: {p.mood}
-                </title>
-              </g>
-            ),
-        )}
-        {days.map((d, i) => (
-          <text key={d} x={35 + i * 39} y="157" textAnchor="middle">
-            {formatDate(d, { weekday: "short" }).slice(0, 1)}
-          </text>
-        ))}
-        {!points.some(Boolean) && (
-          <text x="150" y="76" textAnchor="middle">
-            Your check-ins will appear here
-          </text>
-        )}
-      </svg>
-      <div className="chart-legend">
-        <i className="dot sage" />
-        Daily mood check-ins
-      </div>
+      {!hasMoods && <p className="fine-print">Your check-ins will appear here</p>}
+      <ol className="mood-history" aria-label="Daily mood check-ins">
+        {days.map((d) => {
+          const mood = entries.find((e) => e.date === d)?.mood;
+          return (
+            <li key={d}>
+              <time dateTime={d}>{formatDate(d, { weekday: "short", month: "short", day: "numeric" })}</time>
+              <span className={`mood-mark ${mood ? "recorded" : ""}`} aria-hidden="true" />
+              <span>{mood || "Not logged"}</span>
+            </li>
+          );
+        })}
+      </ol>
+      <p className="chart-legend">Daily mood check-ins</p>
     </div>
   );
 }
@@ -400,10 +338,11 @@ export function Journal({
     )
     .sort((a, b) => b.date.localeCompare(a.date));
   const pages = Math.max(1, Math.ceil(filtered.length / 8));
+  const currentPage = Math.min(page, pages);
   return filtered.length ? (
     <>
       <div className="journal-list">
-        {filtered.slice((page - 1) * 8, page * 8).map((e) => (
+        {filtered.slice((currentPage - 1) * 8, currentPage * 8).map((e) => (
           <button
             key={e.id}
             className="journal-entry"
@@ -448,22 +387,22 @@ export function Journal({
       </div>
       <div className="pagination">
         <span>
-          {filtered.length} check-ins · Page {page} of {pages}
+          {filtered.length} check-ins · Page {currentPage} of {pages}
         </span>
         <div>
           <button
             className="icon-button"
             aria-label="Previous page"
-            disabled={page <= 1}
-            onClick={() => setPage(page - 1)}
+            disabled={currentPage <= 1}
+            onClick={() => setPage(currentPage - 1)}
           >
             <ChevronLeft size={18} />
           </button>
           <button
             className="icon-button"
             aria-label="Next page"
-            disabled={page >= pages}
-            onClick={() => setPage(page + 1)}
+            disabled={currentPage >= pages}
+            onClick={() => setPage(currentPage + 1)}
           >
             <ChevronRight size={18} />
           </button>
@@ -542,7 +481,7 @@ export function Insights({ data }: { data: Data }) {
           </p>
         </div>
       </div>
-      <div className="insights-grid">
+      <div className={`insights-grid ${data.entries.length ? "has-entries" : ""}`}>
         <section className="card">
           <SectionTitle
             eyebrow="YOUR EMOTIONAL LANDSCAPE"
@@ -668,10 +607,6 @@ export function Settings({
 export function InfoPage({ path, start }: { path: string; start: () => void }) {
   return (
     <div className="info-page">
-      <p className="eyebrow">
-        <Flower2 size={15} />
-        THE AVELA APPROACH
-      </p>
       <h1>
         {path === "/privacy" ? (
           "Your body. Your data."

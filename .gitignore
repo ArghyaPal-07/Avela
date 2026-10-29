@@ -5,3 +5,5 @@ out/
 !.env.example
 *.tsbuildinfo
 artifacts/
+.agents
+.skills-lock.json

@@ -89,6 +89,7 @@ type DialogName =
   | null;
 export function WellnessApp({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const activePath = path === "/dashboard" ? "/" : path;
   const [data, setData] = useState<Data | null>(null),
     [mode, setMode] = useState<"local" | "cloud">("local");
   const [user, setUser] = useState<User | null>(null),
@@ -105,6 +106,8 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
     [page, setPage] = useState(1);
   const [month, setMonth] = useState(() => today().slice(0, 7));
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sidebar = useRef<HTMLElement>(null);
+  const menuTrigger = useRef<HTMLButtonElement>(null);
   function toast(message: string) {
     setNotice(message);
     if (timer.current) clearTimeout(timer.current);
@@ -209,11 +212,41 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
   }, [path]);
   useEffect(() => {
     if (!mobile) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    // Focus after the drawer is visible; focusing during its hidden first frame is ignored.
+    const focusTimer = setTimeout(() => {
+      sidebar.current?.querySelector<HTMLButtonElement>(".mobile-close")?.focus();
+    }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 180);
     const closeMenu = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMobile(false);
+      if (event.key === "Tab") {
+        const controls = sidebar.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not(:disabled)',
+        );
+        if (!controls?.length) return;
+        const first = controls[0], last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    const closeOnDesktop = () => {
+      if (window.innerWidth > 1100) setMobile(false);
     };
     document.addEventListener("keydown", closeMenu);
-    return () => document.removeEventListener("keydown", closeMenu);
+    window.addEventListener("resize", closeOnDesktop);
+    return () => {
+      document.removeEventListener("keydown", closeMenu);
+      clearTimeout(focusTimer);
+      window.removeEventListener("resize", closeOnDesktop);
+      document.body.style.overflow = previousOverflow;
+      menuTrigger.current?.focus();
+    };
   }, [mobile]);
   useEffect(() => {
     if (path === "/flow" || path === "/mood" || path === "/body") {
@@ -333,10 +366,10 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
           : path === "/settings"
             ? "Your space, your way."
             : data.profile.name
-              ? `A little more in tune, ${data.profile.name}.`
+              ? "A little more in tune."
               : "Welcome to your wellness space.";
   const currentNav =
-    nav.find((n) => n.href === path)?.label ||
+    nav.find((n) => n.href === activePath)?.label ||
     (path === "/settings"
       ? "Settings"
       : isInfo
@@ -359,14 +392,22 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
         <button
           className="nav-scrim"
           aria-label="Close navigation"
+          tabIndex={-1}
           onClick={() => setMobile(false)}
         />
       )}
-      <aside className={`sidebar ${mobile ? "open" : ""}`}>
+      <aside
+        ref={sidebar}
+        id="navigation"
+        role={mobile ? "dialog" : undefined}
+        aria-modal={mobile ? true : undefined}
+        aria-label={mobile ? "Navigation" : undefined}
+        className={`sidebar ${mobile ? "open" : ""}`}
+      >
         <Link href="/" className="brand-link" aria-label="Avela home">
           <Brand />
         </Link>
-        <p className="brand-tagline">IN TUNE WITH YOU</p>
+        <p className="brand-tagline">In tune with you</p>
         <button
           className="mobile-close icon-button"
           aria-label="Close navigation"
@@ -374,14 +415,14 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
         >
           <X />
         </button>
-        <div className="nav-label">YOUR WELLNESS SPACE</div>
+        <div className="nav-label">Your wellness space</div>
         <nav aria-label="Main navigation">
           {nav.map((n) => (
             <Link
               key={n.href}
               href={n.href}
-              aria-current={path === n.href ? "page" : undefined}
-              className={`nav-item ${path === n.href ? "active" : ""}`}
+              aria-current={activePath === n.href ? "page" : undefined}
+              className={`nav-item ${activePath === n.href ? "active" : ""}`}
             >
               <n.icon size={19} strokeWidth={1.6} />
               {n.label}
@@ -425,13 +466,15 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </aside>
-      <div className="main-shell">
+      <div className="main-shell" inert={mobile}>
         <header className="topbar">
           <div className="breadcrumb">
             <button
+              ref={menuTrigger}
               className="icon-button mobile-menu"
               aria-label="Open navigation"
               aria-expanded={mobile}
+              aria-controls="navigation"
               onClick={() => setMobile(true)}
             >
               <Menu />
@@ -472,7 +515,7 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </header>
-        <main id="main" className="main-content">
+        <main id="main" className="main-content" tabIndex={-1}>
           {error && (
             <div className="error-banner" role="alert">
               <span>{error}</span>
@@ -503,11 +546,10 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
           {!isInfo && (
             <div className="page-heading">
               <div>
-                <p className="eyebrow">
-                  <span className="greeting-dot" />
-                  YOUR EVERYDAY, UNDERSTOOD
-                </p>
                 <h1>{title}</h1>
+                {currentNav === "Overview" && data.profile.name && (
+                  <p className="profile-name">Your space, {data.profile.name}.</p>
+                )}
                 <p>
                   {path === "/calendar"
                     ? "Make room for your rhythm, one day at a time."
@@ -557,8 +599,8 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
                 large
               />
               <aside className="card calendar-side">
-                <p className="eyebrow">THE BIGGER PICTURE</p>
                 <h2>Your next chapter</h2>
+                <p className="section-caption">The bigger picture</p>
                 <div className="calendar-next">
                   <Droplet />
                   <span>
@@ -661,10 +703,6 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
               <div className="overview-top">
                 <section className="cycle-card">
                   <div className="cycle-copy">
-                    <p className="eyebrow">
-                      <span className="live-dot" />
-                      YOUR CURRENT CYCLE
-                    </p>
                     <div className="phase-badge">
                       <Leaf size={14} />
                       {status.phase}
@@ -717,8 +755,7 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
                     <span className="icon-tile lavender">
                       <Heart size={19} strokeWidth={1.5} />
                     </span>
-                    <span className="eyebrow">YOUR DAILY CHECK-IN</span>
-                    <span className="little-spark">✧</span>
+                    <span>Your daily check-in</span>
                   </div>
                   <h2>
                     How are you, <em>really?</em>
@@ -754,6 +791,7 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
                           setDialog("log");
                         }}
                         className={todayEntry?.mood === m ? "chosen" : ""}
+                        aria-pressed={todayEntry?.mood === m}
                       >
                         <MoodFace index={i} />
                         <span>{m}</span>
@@ -893,7 +931,7 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
                 </section>
                 <section className="care-card">
                   <div className="care-top">
-                    <span className="eyebrow">A LITTLE SELF-CARE</span>
+                    <span>A little self-care</span>
                     <Sun size={20} strokeWidth={1.2} />
                   </div>
                   <div className="care-illustration">
@@ -911,7 +949,7 @@ export function WellnessApp({ children }: { children: React.ReactNode }) {
                   <Link href="/about" className="text-link">
                     A gentler approach <ArrowRight size={15} />
                   </Link>
-                  <span className="care-number">01 / A MOMENT TO PAUSE</span>
+                  <span className="care-number">A moment to pause</span>
                 </section>
               </div>
               <section className="recent-section">

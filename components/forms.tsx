@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useId, useState } from "react";
 import {
   ArrowRight,
   Check,
@@ -35,6 +35,7 @@ export function LogForm({
   onSave: (e: Entry) => void;
   onDelete: (e: Entry) => void;
 }) {
+  const errorId = useId();
   const [value, setValue] = useState<Entry>(
       entry || {
         id: crypto.randomUUID(),
@@ -63,9 +64,14 @@ export function LogForm({
         };
         const err = validateEntry(submitted);
         setError(err);
+        if (err) {
+          requestAnimationFrame(() => document.getElementById(errorId)?.focus());
+        }
         if (!err) onSave(submitted);
       }}
       className="log-form"
+      aria-describedby={error ? errorId : undefined}
+      aria-busy={busy}
     >
       <label>
         Date
@@ -172,7 +178,7 @@ export function LogForm({
         />
       </label>
       {error && (
-        <p className="form-error" role="alert">
+        <p id={errorId} tabIndex={-1} className="form-error" role="alert">
           {error}
         </p>
       )}
@@ -232,11 +238,15 @@ export function ProfileForm({
   busy: boolean;
   save: (p: Profile) => void;
 }) {
+  const errorId = useId();
+  const guidanceId = useId();
   const [p, setP] = useState(profile),
     [error, setError] = useState("");
   return (
     <form
       className="profile-form"
+      aria-describedby={error ? `${guidanceId} ${errorId}` : guidanceId}
+      aria-busy={busy}
       onSubmit={(e) => {
         e.preventDefault();
         const form = new FormData(e.currentTarget);
@@ -246,6 +256,9 @@ export function ProfileForm({
         };
         const err = validateProfile(submitted);
         setError(err);
+        if (err) {
+          requestAnimationFrame(() => document.getElementById(errorId)?.focus());
+        }
         if (!err) save({ ...submitted, name: p.name.trim() });
       }}
     >
@@ -302,13 +315,13 @@ export function ProfileForm({
           />
         </label>
       </div>
-      <p className="fine-print">
+      <p id={guidanceId} className="fine-print">
         These settings give you a starting estimate. You can change them
         anytime. Avela does not diagnose conditions or provide contraception
         guidance.
       </p>
       {error && (
-        <p role="alert" className="form-error">
+        <p id={errorId} tabIndex={-1} role="alert" className="form-error">
           {error}
         </p>
       )}
@@ -332,6 +345,7 @@ export function Account({
   done: () => void;
   initialSignup?: boolean;
 }) {
+  const passwordHelpId = useId();
   const [screen, setScreen] = useState<"login" | "signup" | "reset">(
     initialSignup ? "signup" : "login",
   );
@@ -479,6 +493,9 @@ export function Account({
                   type="password"
                   required
                   minLength={screen === "signup" ? 8 : 1}
+                  aria-describedby={
+                    screen === "signup" ? passwordHelpId : undefined
+                  }
                   autoComplete={
                     screen === "signup" ? "new-password" : "current-password"
                   }
@@ -486,6 +503,11 @@ export function Account({
                   disabled={busy}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                {screen === "signup" && (
+                  <span id={passwordHelpId} className="fine-print">
+                    At least 8 characters.
+                  </span>
+                )}
               </label>
             )}
             <button

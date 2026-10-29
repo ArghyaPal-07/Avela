@@ -112,8 +112,12 @@ export function SectionTitle({
   return (
     <div className="section-title">
       <div>
-        {eyebrow && <p className="eyebrow">{eyebrow}</p>}
         <h2>{title}</h2>
+        {eyebrow && (
+          <p className="section-caption">
+            {eyebrow.charAt(0) + eyebrow.slice(1).toLowerCase()}
+          </p>
+        )}
       </div>
       {children}
     </div>

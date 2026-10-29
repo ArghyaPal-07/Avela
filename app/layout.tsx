@@ -21,7 +21,7 @@ export default function Layout({
     <html lang="en">
       <body>
         <WellnessApp>{children}</WellnessApp>
-        <Analytics />
+        <Analytics mode={process.env.VERCEL ? "production" : "development"} />
       </body>
     </html>
   );
