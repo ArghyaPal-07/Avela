@@ -49,8 +49,8 @@ import {
   validateEntry,
   validateProfile,
   dayNumber,
-} from "@/lib/model";
-import { cloudEnabled, cloud } from "@/lib/cloud";
+} from "@/src/lib/model";
+import { cloudEnabled, cloud } from "@/src/lib/cloud";
 import {
   Botanical,
   Brand,
@@ -60,7 +60,7 @@ import {
   Arrow,
 } from "./primitives";
 import type { User } from "firebase/auth";
-import { download } from "@/lib/download";
+import { download } from "@/src/lib/download";
 import { LogForm, ProfileForm, Account } from "./forms";
 import {
   MoodFace,

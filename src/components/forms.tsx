@@ -17,8 +17,8 @@ import {
   today,
   validateEntry,
   validateProfile,
-} from "@/lib/model";
-import { cloud, cloudEnabled } from "@/lib/cloud";
+} from "@/src/lib/model";
+import { cloud, cloudEnabled } from "@/src/lib/cloud";
 import type { User } from "firebase/auth";
 export function LogForm({
   entry,

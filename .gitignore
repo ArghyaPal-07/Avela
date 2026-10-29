@@ -4,6 +4,6 @@ out/
 .env*
 !.env.example
 *.tsbuildinfo
-artifacts/
+.pub/artifacts/
 .agents
 .skills-lock.json

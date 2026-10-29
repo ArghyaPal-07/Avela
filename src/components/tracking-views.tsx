@@ -29,8 +29,8 @@ import {
   moods,
   symptoms,
   today,
-} from "@/lib/model";
-import { download } from "@/lib/download";
+} from "@/src/lib/model";
+import { download } from "@/src/lib/download";
 import { ProfileForm } from "./forms";
 import { Arrow, Botanical, Empty, SectionTitle } from "./primitives";
 export function MoodFace({ index }: { index: number }) {
